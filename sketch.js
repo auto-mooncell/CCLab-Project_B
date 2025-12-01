@@ -8,31 +8,15 @@ function setup() {
 
 
   input = createInput();
-  input.parent("p5-canvas-container");
+  input.parent("p5-canvas-container"); 
   input.size(300);
   input.attribute("placeholder", "Input data to the void...");
-  input.style("background", "rgba(0,0,0,0.5)");
-  input.style("border", "none");
-  input.style("border-bottom", "1px solid #50fa7b"); 
-  input.style("color", "#50fa7b"); 
-  input.style("padding", "10px");
-  input.style("font-family", "Courier New");
-  input.style("outline", "none");
-  input.style("margin-top", "15px");
-  input.style("font-size", "16px");
+  input.class("my-input"); 
 
   btn = createButton('UPLOAD');
   btn.parent("p5-canvas-container");
   btn.mousePressed(addMemory);
-  btn.style("background", "transparent");
-  btn.style("color", "#bd93f9");
-  btn.style("border", "1px solid #bd93f9");
-  btn.style("padding", "10px 20px");
-  btn.style("font-family", "Courier New");
-  btn.style("cursor", "pointer");
-  btn.style("margin-left", "15px");
-  btn.mouseOver(() => btn.style("background", "rgba(189, 147, 249, 0.2)"));
-  btn.mouseOut(() => btn.style("background", "transparent"));
+  btn.class("my-btn");
 
   for (let i = 0; i < 50; i++) {
     stars.push(new Star());
