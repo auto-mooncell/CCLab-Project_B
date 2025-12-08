@@ -1,13 +1,14 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
-  color: #e0e0e0; 
-  font-family: 'Courier New', Courier, monospace; 
+  width: 100%;
   height: 100%;
+  background: #000;
   overflow: hidden; 
+  font-family: 'Courier New', Courier, monospace; 
 }
 
+/* CRT Scanline overlay */
 body::after {
   content: "";
   position: absolute;
@@ -23,18 +24,32 @@ body::after {
     transparent 2px
   );
   pointer-events: none; 
-  z-index: 10;
+  z-index: 999; 
 }
 
+/* Canvas sits behind UI */
+#p5-canvas-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* UI Wrapper: Title Top, Desc Bottom */
 .main-wrapper {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass to canvas */
   display: flex;
-  justify-content: center; 
-  align-items: center;   
   flex-direction: column;
-  z-index: 20; 
+  justify-content: space-between; 
+  align-items: center;
 }
 
 h1 {
@@ -42,26 +57,53 @@ h1 {
   letter-spacing: 5px;
   text-transform: uppercase;
   text-shadow: 0 0 10px rgba(80, 250, 123, 0.5); 
-  margin-bottom: 20px;
+  color: #e0e0e0;
+  margin-top: 30px; 
   font-size: 24px;
+  text-align: center;
+  pointer-events: auto;
 }
 
-#p5-canvas-container {
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8); 
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.description {
+  color: #888;
+  font-size: 14px;
+  max-width: 600px;
+  text-align: center;
+  margin-bottom: 30px; 
+  background: rgba(0, 0, 0, 0.6); 
+  padding: 10px;
+  border-radius: 5px;
+  pointer-events: auto;
 }
 
+/* Input Group: Centered */
+.input-group {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  pointer-events: auto; 
+  z-index: 20;
+}
 
 .my-input {
   background: rgba(0, 0, 0, 0.5);
   border: none;
-  border-bottom: 1px solid #50fa7b; /* 底部那条绿线 */
+  border-bottom: 1px solid #50fa7b; 
   color: #50fa7b;
   padding: 10px;
   font-family: 'Courier New', Courier, monospace;
   outline: none;
-  margin-top: 15px;
-  font-size: 16px;
+  font-size: 18px;
+  width: 320px; 
+}
+
+.my-input::placeholder {
+  color: rgba(80, 250, 123, 0.5);
+  font-style: italic;
+  font-size: 14px;
 }
 
 .my-btn {
@@ -72,8 +114,26 @@ h1 {
   font-family: 'Courier New', Courier, monospace;
   cursor: pointer;
   margin-left: 15px;
+  font-size: 16px;
 }
 
 .my-btn:hover {
   background: rgba(189, 147, 249, 0.2);
+}
+
+.pay-btn {
+  background: red;
+  color: white;
+  border: 2px solid white;
+  padding: 20px;
+  font-size: 20px;
+  font-family: 'Courier New', Courier, monospace;
+  cursor: pointer;
+  animation: blink 0.5s infinite;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }

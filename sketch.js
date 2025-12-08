@@ -1,173 +1,249 @@
-let memories = [];
-let input, btn;
-let stars = [];
-let video;
-let osc; 
-let audioStarted = false;
+// === GLOBALS ===
+let stage = 0; // 0: Cave, 1: Paper, 2: Cloud, 3: Paywall
+let totalData = 0; // Tracks input count to drive decay
 
-// 【核心修改 1】: 引入“不可逆”的计数器
-// totalData 记录你一共上传了多少次数据，它只会增加，不会减少
-// 这意味着系统的崩坏是永久的
-let totalData = 0; 
+// Assets & UI
+let video, caveGraphic;
+let input, btnMain, btnPay, divInputGroup;
+let memories = []; 
+let stars = [];    
+
+// Prompts to guide user input
+let prompts = [
+  "What is your earliest memory?",
+  "Who are you afraid to lose?",
+  "Tell me a secret you've never told.",
+  "What does home feel like?",
+  "Who was your first love?",
+  "What is your biggest regret?"
+];
 
 function setup() {
-  let canvas = createCanvas(800, 500);
+  let canvas = createCanvas(windowWidth, windowHeight);
   canvas.parent("p5-canvas-container");
 
-  // 1. 摄像头
+  // 1. Webcam (hidden, used for pixel effect)
   video = createCapture(VIDEO);
-  video.size(800, 500); 
+  video.size(80, 60); 
   video.hide();
 
-  // 2. 声音
-  osc = new p5.Oscillator('sawtooth'); // 改用 'sawtooth' (锯齿波)，声音更刺耳、更像故障
-  osc.amp(0);
+  caveGraphic = createGraphics(windowWidth, windowHeight);
 
-  // 3. UI
+  // 2. UI Setup
+  divInputGroup = createDiv('');
+  divInputGroup.class('input-group');
+  divInputGroup.hide(); 
+
   input = createInput();
-  input.parent("p5-canvas-container");
-  input.size(300);
-  input.attribute("placeholder", "Feed the system..."); // 文案改得更黑暗一点
-  input.class("my-input");
+  input.parent(divInputGroup);
+  input.class("my-input"); 
+  updatePrompt(); 
 
-  btn = createButton('UPLOAD DATA');
-  btn.parent("p5-canvas-container");
-  btn.mousePressed(addMemory);
-  btn.class("my-btn");
+  btnMain = createButton('SAVE');
+  btnMain.parent(divInputGroup);
+  btnMain.mousePressed(addMemory);
+  btnMain.class("my-btn");
 
-  // 4. 背景星尘
-  for (let i = 0; i < 50; i++) {
-    stars.push(new Star());
-  }
+  btnPay = createButton('PAY $999 TO RESTORE MEMORY');
+  // Center the pay button manually
+  btnPay.position(windowWidth/2 - 150, windowHeight/2 + 50); 
+  btnPay.mousePressed(resetSystem);
+  btnPay.class("pay-btn");
+  btnPay.hide();
+
+  // 3. Stars for background
+  for (let i = 0; i < 80; i++) stars.push(new Star());
 
   textAlign(CENTER);
-  textSize(18);
-  pixelDensity(1); // 保证性能
+  pixelDensity(1);
+}
+
+// Handle window resize for full screen
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  caveGraphic = createGraphics(windowWidth, windowHeight);
+  btnPay.position(windowWidth/2 - 150, windowHeight/2 + 50);
 }
 
 function draw() {
   background(0);
 
-  // === 阶段控制逻辑 ===
-  // 使用 totalData (累计数据) 而不是 memories.length
-  // 0-5: 安全区
-  // 5-15: 马赛克化
-  // 15+: 彻底破碎 (Shattered)
-  let chaosLevel = totalData; 
-
-  // 计算马赛克大小 (Step)
-  let step = map(chaosLevel, 0, 20, 1, 50);
-  step = floor(constrain(step, 1, 60));
-
-  // --- 阶段一：镜像 (chaos < 5) ---
-  if (chaosLevel < 5) {
-    tint(100, 100, 255, 80); // 幽灵蓝
-    image(video, 0, 0, width, height);
-  } 
-  // --- 阶段二 & 三：崩坏 (chaos >= 5) ---
-  else {
-    video.loadPixels();
+  // === STAGE 0: CAVE ===
+  if (stage === 0) {
+    drawCaveEffect(video); 
+    fill(200, 100, 50); 
     noStroke();
+    textSize(20);
+    text("Era 1: The Stone. Click to imprint.", width/2, height - 120);
+  }
+
+  // === STAGE 1: PAPER ===
+  else if (stage === 1) {
+    background(240); 
+    tint(255, 50); 
+    image(caveGraphic, 0, 0); // Faint background trace
     
-    // 遍历像素
-    for (let y = 0; y < height; y += step) {
-      for (let x = 0; x < width; x += step) {
-        
-        // 计算像素索引 [Week 11 知识点]
-        let index = (x + y * video.width) * 4;
-        
-        let r = video.pixels[index];
-        let g = video.pixels[index + 1];
-        let b = video.pixels[index + 2];
+    fill(0);
+    noStroke();
+    textSize(16);
+    for (let m of memories) text(m.text, m.x, m.y); 
 
-        // 【核心修改 2】: 破碎效果 (Shatter)
-        // 如果 chaosLevel 很高 (>15)，方块位置开始随机抖动
-        let xOffset = 0;
-        let yOffset = 0;
-        
-        if (chaosLevel > 15) {
-          // 抖动幅度随 chaos 增加
-          let shake = (chaosLevel - 15) * 2; 
-          xOffset = random(-shake, shake);
-          yOffset = random(-shake, shake);
-          
-          // 颜色失真 (RGB Split): 红色通道增强，制造恐惧感
-          r += 50; 
-        }
+    fill(100);
+    text("Era 2: The Paper. Data is stable.", width/2, height - 120);
+    text(`Written: ${memories.length}/3`, width/2, height - 90);
+  }
 
-        // 绘制方块 (带偏移)
-        fill(r, g, b + 50, 100); // 保持幽灵蓝底色
-        rect(x + xOffset, y + yOffset, step, step);
-      }
+  // === STAGE 2: CLOUD / DECAY ===
+  else if (stage === 2) {
+    background(20, 20, 30, 50); 
+    
+    noTint();
+    for (let s of stars) { s.move(); s.show(); }
+
+    // Render memories
+    for (let i = memories.length - 1; i >= 0; i--) {
+      let m = memories[i];
+      m.move(); 
+      m.show();
+      if (m.lifespan <= 0) memories.splice(i, 1);
     }
-  }
 
-  // 暗色遮罩
-  noStroke();
-  fill(10, 10, 20, 120);
-  rect(0, 0, width, height);
-
-  // --- 声音控制 ---
-  if (audioStarted) {
-    // 声音随 chaos 变得极其尖锐和混乱
-    // 频率从 100Hz 飙升到 1000Hz
-    let targetFreq = map(chaosLevel, 0, 30, 100, 1000);
-    // 加一点随机噪点，让声音听起来“坏掉了”
-    if (chaosLevel > 15) targetFreq += random(-100, 100);
-    
-    osc.freq(targetFreq, 0.1);
-    
-    let amp = map(sin(frameCount * 0.2), -1, 1, 0.1, 0.2);
-    osc.amp(amp, 0.1);
-  }
-
-  noTint(); 
-  
-  for (let s of stars) {
-    s.move();
-    s.show();
-  }
-
-  for (let i = memories.length - 1; i >= 0; i--) {
-    let m = memories[i];
-    m.move();
-    m.show();
-    if (m.lifespan <= 0) {
-      memories.splice(i, 1);
+    // Decay Thresholds
+    if (totalData > 4) {
+       fill(255, 255, 0); 
+       textSize(14);
+       text("WARNING: STORAGE LIMIT REACHED", width/2, 80);
     }
+
+    if (totalData > 6) {
+       // Flashing alert
+       if (frameCount % 60 < 30) {
+           fill(255, 0, 0);
+           textSize(18);
+           text("SUBSCRIPTION EXPIRED. DATA CORRUPTION IMMINENT.", width/2, 110);
+       }
+       // UI Failure
+       btnMain.html("UPLOAD (FAILED)");
+       btnMain.style("border", "1px solid red");
+       btnMain.style("color", "red");
+    }
+
+    // Trigger Crash
+    if (totalData > 8) stage = 3; 
   }
- 
-  fill(0, 255, 0);
-  textSize(12);
-  textAlign(RIGHT);
-  text("SYSTEM ENTROPY: " + floor(totalData * 5) + "%", width - 20, height - 20);
-  textAlign(CENTER); // 还原
+
+  // === STAGE 3: PAYWALL ===
+  else if (stage === 3) {
+    background(255, 0, 0); 
+    // Matrix rain effect
+    for (let i=0; i<50; i++) {
+      fill(0, 50);
+      text(char(random(33, 126)), random(width), random(height));
+    }
+
+    fill(0);
+    rectMode(CENTER);
+    rect(width/2, height/2, 500, 250);
+    fill(255);
+    textSize(30);
+    text("SYSTEM FAILURE", width/2, height/2 - 30);
+    textSize(16);
+    text("Your memories have been deleted.", width/2, height/2 + 20);
+    
+    divInputGroup.hide();
+    btnPay.show();
+  }
+}
+
+// === INTERACTION ===
+
+function mousePressed() {
+  // Advance from Cave to Paper
+  if (stage === 0) {
+    drawCaveEffect(video, caveGraphic); // Save snapshot
+    stage = 1;
+    
+    divInputGroup.show();
+    // Styling for "Paper" mode
+    input.style("color", "black");
+    input.style("border-bottom", "2px solid black");
+    input.style("background", "rgba(255,255,255,0.8)");
+    
+    btnMain.html("WRITE");
+    btnMain.style("color", "black");
+    btnMain.style("border", "1px solid black");
+    
+    setTimeout(() => input.elt.focus(), 100);
+  }
 }
 
 function keyPressed() {
-  if (keyCode === ENTER) {
+  if (keyCode === ENTER && (stage === 1 || stage === 2)) {
     addMemory();
   }
 }
 
-function addMemory() {
-  if (!audioStarted) {
-    userStartAudio();
-    osc.start();
-    osc.amp(0.2, 0.5);
-    audioStarted = true;
-  }
+function updatePrompt() {
+  let p = random(prompts);
+  input.attribute('placeholder', p);
+}
 
+function addMemory() {
   let txt = input.value();
   if (txt !== '') {
-    totalData += 1; 
-    
-    memories.push(new MemoryBubble(txt, random(100, width - 100), height - 50));
+    memories.push(new MemoryBubble(txt, random(100, width-100), random(100, height-100)));
     input.value('');
+    updatePrompt(); 
+    
+    totalData++; 
+
+    // Transition Stage 1 -> 2
+    if (stage === 1 && memories.length >= 3) {
+      stage = 2;
+      // Styling for "Cyber" mode
+      input.style("color", "#50fa7b");
+      input.style("border-bottom", "1px solid #50fa7b");
+      input.style("background", "rgba(0,0,0,0.5)");
+
+      btnMain.html("UPLOAD");
+      btnMain.style("color", "#50fa7b");
+      btnMain.style("border", "1px solid #50fa7b");
+      
+      // Make memories float
+      for (let m of memories) { m.lifespan = 255; m.y = height; }
+    }
   }
 }
 
-// ================= Classes =================
+function resetSystem() {
+  memories = [];
+  alert("Error 404: Cash not found.");
+  location.reload(); 
+}
+
+// === HELPERS ===
+
+// Pixelate effect for cave stage
+function drawCaveEffect(source, target) {
+  let ctx = target || window;
+  source.loadPixels();
+  ctx.noStroke();
+  let w = width / source.width;
+  let h = height / source.height;
+
+  for (let y = 0; y < source.height; y++) {
+    for (let x = 0; x < source.width; x++) {
+      let index = (x + y * source.width) * 4;
+      let r = source.pixels[index];
+      let bright = (r + source.pixels[index+1] + source.pixels[index+2])/3;
+      if (bright < 100) {
+        ctx.fill(150, 80, 40, 200); 
+        ctx.rect(x * w, y * h, w + 1, h + 1); 
+      }
+    }
+  }
+}
+
 class MemoryBubble {
   constructor(text, x, y) {
     this.text = text;
@@ -176,34 +252,39 @@ class MemoryBubble {
     this.lifespan = 255;
     this.xOffset = random(1000);
   }
-  move() {
-    this.y -= 1.2;
-    this.lifespan -= 0.8;
-    this.x += sin(frameCount * 0.05 + this.xOffset) * 0.5;
-    
 
-    let chaosChance = map(totalData, 0, 30, 0.01, 0.5);
+  move() {
+    this.y -= 1.5; 
+    this.lifespan -= 1.0; 
+    this.x += sin(frameCount * 0.05 + this.xOffset);
     
-    if (random(1) < chaosChance) {
-        this.glitch();
-    }
+    // Glitch Probability
+    let decayRate = 0;
+    if (totalData > 6) decayRate = map(totalData, 6, 10, 0.1, 0.9); 
+    else if (stage === 2) decayRate = 0.02; 
+
+    if (random(1) < decayRate) this.glitch();
   }
+
   show() {
     noStroke();
-    fill(200, 255, 200, this.lifespan);
-    textSize(18);
+    if (stage === 1) fill(0); 
+    else {
+        // Red if corrupted, Green if safe
+        if (totalData > 6) fill(255, 50, 50, this.lifespan);
+        else fill(100, 255, 100, this.lifespan);
+    }
+    textSize(20); 
     text(this.text, this.x, this.y);
   }
+
   glitch() {
-    let chars = "$%#@&?!_~";
+    let chars = "$%#@&?!";
     let newText = "";
     for (let i = 0; i < this.text.length; i++) {
-      if (random(1) < 0.3) { /
-        let r = int(random(chars.length));
-        newText += chars.charAt(r);
-      } else {
-        newText += this.text.charAt(i);
-      }
+      let intensity = map(totalData, 4, 10, 0.1, 0.9); 
+      if (random(1) < intensity) newText += chars.charAt(int(random(chars.length)));
+      else newText += this.text.charAt(i);
     }
     this.text = newText;
   }
@@ -214,22 +295,18 @@ class Star {
     this.x = random(width);
     this.y = random(height);
     this.size = random(1, 3);
-    this.speed = random(0.2, 1);
-    this.brightness = random(100, 255);
+    this.speed = random(0.5, 2);
   }
   move() {
     this.y -= this.speed;
-    if (totalData > 15) {
-        this.x += random(-1, 1);
-    }
-    
+    if (totalData > 6) this.x += random(-2, 2); // Shake on corruption
     if (this.y < 0) {
       this.y = height;
       this.x = random(width);
     }
   }
   show() {
-    fill(255, this.brightness);
+    fill(255, random(100, 255));
     noStroke();
     ellipse(this.x, this.y, this.size);
   }
