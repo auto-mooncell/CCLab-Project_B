@@ -130,6 +130,10 @@ h1 {
   font-family: 'Courier New', Courier, monospace;
   cursor: pointer;
   animation: blink 0.5s infinite;
+  position: fixed; 
+  z-index: 2147483647; 
+  transform: translate(-50%, 0);
+  display: none;
 }
 
 @keyframes blink {
