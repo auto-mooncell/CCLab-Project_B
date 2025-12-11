@@ -1,5 +1,5 @@
 // === GLOBALS ===
-let stage = 0; 
+let stage = -1; // MODIFIED: Start at -1 (Splash Screen)
 let totalData = 0; 
 
 // UI & Assets
@@ -63,8 +63,28 @@ function windowResized() {
 function draw() {
   background(0);
 
+  // === NEW STAGE -1: SPLASH SCREEN ===
+  if (stage === -1) {
+    // Subtle background stars (no movement)
+    noTint();
+    for (let s of stars) { s.show(); }
+
+    // Pulsing Title Effect
+    let pulse = map(sin(frameCount * 0.05), -1, 1, 200, 255);
+    
+    fill(255, pulse); 
+    noStroke();
+    textSize(32);
+    textFont('Courier New');
+    text("DEAR FUTURE: WE WERE YOUR BETA TEST", width/2, height/2);
+    
+    textSize(14);
+    fill(150);
+    text("[ Click to Enter ]", width/2, height/2 + 50);
+  }
+
   // === STAGE 0: CAVE ===
-  if (stage === 0) {
+  else if (stage === 0) {
     // FIX: Only draw if video is ready
     if (video.width > 0) {
         drawCaveEffect(video); 
@@ -73,7 +93,7 @@ function draw() {
     fill(200, 100, 50); 
     noStroke();
     textSize(20);
-    text("Era 1: The Stone. Click to imprint.", width/2, height - 120);
+    text("Era 1: The Stone. Click to imprint.", width/2, height - 180);
   }
 
   // === STAGE 1: PAPER ===
@@ -88,8 +108,8 @@ function draw() {
     for (let m of memories) text(m.text, m.x, m.y); 
 
     fill(100);
-    text("Era 2: The Paper. Data is stable.", width/2, height - 120);
-    text(`Written: ${memories.length}/3`, width/2, height - 90);
+    text("Era 2: The Paper. Data is stable.", width/2, height - 180);
+    text(`Written: ${memories.length}/3`, width/2, height - 150);
   }
 
   // === STAGE 2: CLOUD ===
@@ -160,6 +180,12 @@ function draw() {
 // === CONTROLS ===
 
 function mousePressed() {
+  // NEW: Transition from Splash (-1) to Cave (0)
+  if (stage === -1) {
+      stage = 0;
+      return; // Stop here, don't trigger next stage immediately
+  }
+
   if (stage === 0) {
     drawCaveEffect(video, caveGraphic); 
     stage = 1;
