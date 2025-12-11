@@ -1,5 +1,5 @@
 // === GLOBALS ===
-let stage = -1; // MODIFIED: Start at -1 (Splash Screen)
+let stage = -1; // Start at Splash Screen
 let totalData = 0; 
 
 // UI & Assets
@@ -43,13 +43,14 @@ function setup() {
   btnMain.mousePressed(addMemory);
   btnMain.class("my-btn");
 
-  // Pay Button (Created once, hidden initially)
+  // Pay Button
   btnPay = createButton('PAY $999 TO RESTORE MEMORY');
   btnPay.class("pay-btn"); 
   btnPay.mousePressed(resetSystem);
 
-  // Stars
-  for (let i = 0; i < 80; i++) stars.push(new Star());
+  // Stars (Matrix Code Rain)
+  // Increase count for better effect
+  for (let i = 0; i < 150; i++) stars.push(new Star());
 
   textAlign(CENTER);
   pixelDensity(1);
@@ -63,29 +64,27 @@ function windowResized() {
 function draw() {
   background(0);
 
-  // === NEW STAGE -1: SPLASH SCREEN ===
+  // === STAGE -1: SPLASH SCREEN ===
   if (stage === -1) {
-    // Subtle background stars (no movement)
-    noTint();
-    for (let s of stars) { s.show(); }
+    // Draw Matrix Rain in background (Green)
+    for (let s of stars) { s.move(); s.show(); }
 
-    // Pulsing Title Effect
-    let pulse = map(sin(frameCount * 0.05), -1, 1, 200, 255);
+    // Pulsing Title
+    let pulse = map(sin(frameCount * 0.05), -1, 1, 150, 255);
     
-    fill(255, pulse); 
+    fill(100, 255, 100, pulse); // Matrix Green
     noStroke();
     textSize(32);
     textFont('Courier New');
     text("DEAR FUTURE: WE WERE YOUR BETA TEST", width/2, height/2);
     
-    textSize(14);
+    textSize(16);
     fill(150);
-    text("[ Click to Enter ]", width/2, height/2 + 50);
+    text("[ CLICK TO INITIALIZE ]", width/2, height/2 + 60);
   }
 
   // === STAGE 0: CAVE ===
   else if (stage === 0) {
-    // FIX: Only draw if video is ready
     if (video.width > 0) {
         drawCaveEffect(video); 
     }
@@ -112,11 +111,11 @@ function draw() {
     text(`Written: ${memories.length}/3`, width/2, height - 150);
   }
 
-  // === STAGE 2: CLOUD ===
+  // === STAGE 2: CLOUD (Matrix Rain) ===
   else if (stage === 2) {
-    background(20, 20, 30, 50); 
+    background(0, 20); // Dark trail
     
-    noTint();
+    // Draw Matrix Rain
     for (let s of stars) { s.move(); s.show(); }
 
     for (let i = memories.length - 1; i >= 0; i--) {
@@ -166,12 +165,10 @@ function draw() {
     
     divInputGroup.hide();
     
-    // Force button show & position
     btnPay.style('display', 'block');
     btnPay.position(windowWidth / 2, windowHeight / 2 + 160);
   }
   
-  // Ensure button is hidden if NOT in stage 3
   if (stage !== 3) {
     btnPay.style('display', 'none');
   }
@@ -180,12 +177,13 @@ function draw() {
 // === CONTROLS ===
 
 function mousePressed() {
-  // NEW: Transition from Splash (-1) to Cave (0)
+  // Splash -> Cave
   if (stage === -1) {
       stage = 0;
-      return; // Stop here, don't trigger next stage immediately
+      return;
   }
 
+  // Cave -> Paper
   if (stage === 0) {
     drawCaveEffect(video, caveGraphic); 
     stage = 1;
@@ -237,7 +235,6 @@ function addMemory() {
   }
 }
 
-// Error Simulation
 let isResetting = false;
 function resetSystem() {
   if (isResetting) return;
@@ -256,10 +253,7 @@ function resetSystem() {
 
 function drawCaveEffect(source, target) {
   let ctx = target || window;
-  
-  // Safety check for video load
   if (!source || source.width === 0) return;
-  
   source.loadPixels();
   if (source.pixels.length === 0) return;
 
@@ -325,24 +319,49 @@ class MemoryBubble {
   }
 }
 
+// === MODIFIED STAR CLASS (Matrix Rain) ===
 class Star {
   constructor() {
     this.x = random(width);
     this.y = random(height);
-    this.size = random(1, 3);
-    this.speed = random(0.5, 2);
+    this.speed = random(2, 5); // Faster speed for "rain"
+    this.value = round(random(1)); // 0 or 1
+    this.size = random(12, 18);
+    this.switchInterval = random(10, 30);
   }
+
   move() {
-    this.y -= this.speed;
-    if (totalData > 6) this.x += random(-2, 2); 
+    // Make them fall DOWN (Rain) or move UP (Upload)
+    // Here: Move UP to symbolize uploading data
+    this.y -= this.speed; 
+    
+    // Shake if expired
+    if (totalData > 6) {
+        this.x += random(-2, 2);
+    }
+
     if (this.y < 0) {
       this.y = height;
       this.x = random(width);
     }
   }
+
   show() {
-    fill(255, random(100, 255));
     noStroke();
-    ellipse(this.x, this.y, this.size);
+    textSize(this.size);
+    
+    // Green normally, Red if collapsed
+    if (totalData > 6) {
+        fill(255, 0, 0, 150);
+    } else {
+        fill(0, 255, 70, 150); // Matrix Green
+    }
+
+    // Switch between 0 and 1
+    if (frameCount % int(this.switchInterval) === 0) {
+        this.value = round(random(1));
+    }
+
+    text(this.value, this.x, this.y);
   }
 }
