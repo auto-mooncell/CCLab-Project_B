@@ -38,38 +38,35 @@ if (totalData > 6) {
     decayRate = map(totalData, 6, 10, 0.05, 0.8); 
 }
 if (random(1) < decayRate) this.glitch();
-2. Matrix Code Rain
-A custom particle system (Star class) that renders falling/rising streams of binary code (0 and 1). These particles react to the system's state—turning from neon green to warning red when the "system collapse" is imminent.
+```
 
-3. Pixel Manipulation
-For the "Cave" effect, I directly manipulated the video.pixels[] array to create a mosaic/threshold effect, optimizing performance for full-screen rendering without relying on heavy filter functions.
+### 2. Matrix Code Rain
+A custom particle system (`Star` class) that renders falling/rising streams of binary code (`0` and `1`). These particles react to the system's state—turning from neon green to warning red when the "system collapse" is imminent.
 
-🛠️ Installation & Setup
-Clone the repo
+### 3. Pixel Manipulation
+For the "Cave" effect, I directly manipulated the `video.pixels[]` array to create a mosaic/threshold effect, optimizing performance for full-screen rendering without relying on heavy filter functions.
 
-Bash
+## 🛠️ Installation & Setup
 
-git clone https://github.com/auto-mooncell/CCLab-Project_B 
-Open the project
+1.  **Clone the repo**
+    ```bash
+    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+    ```
+2.  **Open the project**
+    * Simply open `index.html` in your browser.
+    * *Recommended:* Use "Live Server" in VS Code to avoid local CORS issues with the webcam.
 
-Simply open index.html in your browser.
+## ⌨️ Controls
 
-Recommended: Use "Live Server" in VS Code to avoid local CORS issues with the webcam.
+* **Mouse Click:** Interact / Advance stages.
+* **Keyboard:** Type to input memories.
+* **Enter:** Save memory.
+* **'T' Key (Dev Mode):** Fast-forward through stages for testing purposes.
 
-⌨️ Controls
-Mouse Click: Interact / Advance stages.
+## 📚 Credits & References
 
-Keyboard: Type to input memories.
-
-Enter: Save memory.
-
-'T' Key (Dev Mode): Fast-forward through stages for testing purposes.
-
-📚 Credits & References
-Library: p5.js
-
-Inspiration: Concepts of digital entropy and The Matrix visual aesthetics.
-
-Course: Creative Coding Lab, Fall 2025.
-
-Created by Auto Mooncell
+* **Library:** [p5.js](https://p5js.org/)
+* **Inspiration:** Concepts of digital entropy and *The Matrix* visual aesthetics.
+* **Course:** Creative Coding Lab, Fall 2025.
+---
+*Created by Auto Mooncell
