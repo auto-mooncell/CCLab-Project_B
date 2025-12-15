@@ -50,7 +50,7 @@ For the "Cave" effect, I directly manipulated the `video.pixels[]` array to crea
 
 1.  **Clone the repo**
     ```bash
-    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+    git clone https://github.com/auto-mooncell/CCLab-Project_B 
     ```
 2.  **Open the project**
     * Simply open `index.html` in your browser.
